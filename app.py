@@ -6,10 +6,8 @@ import pickle
 with open('modelo.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Columnas esperadas por el modelo (excluyendo 'Target')
-expected_columns = ['Air temperature [K]', 'Process temperature [K]',
-                    'Rotational speed [rpm]', 'Torque [Nm]',
-                    'Tool wear [min]', 'Type_L', 'Type_M']
+# Obtener columnas esperadas directamente del modelo
+expected_columns = model.feature_names_in_.tolist()
 
 # Configuración de la página
 st.set_page_config(page_title="Predicción de Fallos Industriales", layout="centered")
@@ -30,7 +28,7 @@ tipo = st.selectbox("Tipo de producto", ["M", "L"])
 type_L = 1 if tipo == "L" else 0
 type_M = 1 if tipo == "M" else 0
 
-# Construcción del DataFrame con las entradas del usuario
+# Construcción inicial del DataFrame
 input_data = pd.DataFrame({
     'Air temperature [K]': [temperatura_aire],
     'Process temperature [K]': [temperatura_proceso],
@@ -41,23 +39,28 @@ input_data = pd.DataFrame({
     'Type_M': [type_M]
 })
 
-# Validación y adaptación del input_data
-try:
-    # Añadir columnas faltantes con valor neutro
-    for col in expected_columns:
-        if col not in input_data.columns:
-            input_data[col] = 0
+# Diagnóstico visual
+st.subheader("🔍 Diagnóstico de entrada")
+st.write("Columnas esperadas por el modelo:")
+st.write(expected_columns)
 
-    # Reordenar columnas
-    input_data = input_data[expected_columns]
+st.write("Columnas enviadas desde la app:")
+st.write(input_data.columns.tolist())
 
-    # Forzar tipo numérico
-    input_data = input_data.astype(float)
+# Predicción
+if st.button("Predecir tipo de fallo"):
+    try:
+        # Añadir columnas faltantes con valor neutro
+        for col in expected_columns:
+            if col not in input_data.columns:
+                input_data[col] = 0
 
-    # Predicción
-    if st.button("Predecir tipo de fallo"):
+        # Reordenar columnas y asegurar tipo numérico
+        input_data = input_data[expected_columns].astype(float)
+
+        # Realizar la predicción
         pred = model.predict(input_data)
         st.success(f"🔍 Tipo de fallo predicho: {pred[0]}")
 
-except Exception as e:
-    st.error("❌ Error al realizar la predicción. Verifica que todos los datos estén completos y en el formato correcto.")
+    except Exception as e:
+        st.error("❌ Error al realizar la predicción. Verifica que todos los datos estén completos y en el formato correcto.")
