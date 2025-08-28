@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import matplotlib.pyplot as plt
 
 # Cargar el modelo entrenado
 with open('modelo.pkl', 'rb') as f:
@@ -23,12 +24,10 @@ desgaste = st.number_input("Desgaste de herramienta [min]", min_value=0.0, max_v
 
 # Selección del tipo de producto
 tipo = st.selectbox("Tipo de producto", ["M", "L"])
-
-# Codificación manual de variables dummy
 type_L = 1 if tipo == "L" else 0
 type_M = 1 if tipo == "M" else 0
 
-# Construcción inicial del DataFrame
+# Construcción del DataFrame
 input_data = pd.DataFrame({
     'Air temperature [K]': [temperatura_aire],
     'Process temperature [K]': [temperatura_proceso],
@@ -43,36 +42,46 @@ input_data = pd.DataFrame({
 st.subheader("🔍 Diagnóstico de entrada")
 st.write("Columnas esperadas por el modelo:")
 st.write(expected_columns)
-
 st.write("Columnas enviadas desde la app:")
 st.write(input_data.columns.tolist())
 
 # Predicción
 if st.button("Predecir tipo de fallo"):
     try:
-        # Añadir columnas faltantes con valor neutro
+        # Adaptar columnas
         for col in expected_columns:
             if col not in input_data.columns:
                 input_data[col] = 0
-
-        # Reordenar columnas y asegurar tipo numérico
         input_data = input_data[expected_columns].astype(float)
 
-        # Realizar la predicción
-        pred = model.predict(input_data)
-        st.success(f"🔍 Tipo de fallo predicho: {pred[0]}")
+        # Predicción
+        pred = model.predict(input_data)[0]
+        st.success(f"🔍 Tipo de fallo predicho: {pred}")
 
-        # Mostrar probabilidades por clase
+        # Probabilidades
         proba = model.predict_proba(input_data)[0]
         classes = model.classes_
-
         proba_df = pd.DataFrame({
             'Tipo de fallo': classes,
             'Probabilidad': proba
         }).sort_values(by='Probabilidad', ascending=False)
 
+        # Alerta preventiva si hay riesgo significativo
+        fallo_total = 1 - proba_df[proba_df['Tipo de fallo'] == 'No Failure']['Probabilidad'].values[0]
+        if fallo_total > 0.2:
+            st.warning(f"⚠️ Riesgo detectado: {fallo_total:.2%} de probabilidad acumulada de fallo. Revisión recomendada.")
+
+        # Mostrar tabla
         st.subheader("📊 Probabilidades por tipo de fallo")
         st.dataframe(proba_df.style.format({'Probabilidad': '{:.2%}'}))
+
+        # Gráfico de barras
+        st.subheader("📈 Visualización de probabilidades")
+        fig, ax = plt.subplots()
+        ax.barh(proba_df['Tipo de fallo'], proba_df['Probabilidad'], color='steelblue')
+        ax.set_xlabel("Probabilidad")
+        ax.invert_yaxis()
+        st.pyplot(fig)
 
     except Exception as e:
         st.error("❌ Error al realizar la predicción. Verifica que todos los datos estén completos y en el formato correcto.")
