@@ -62,5 +62,17 @@ if st.button("Predecir tipo de fallo"):
         pred = model.predict(input_data)
         st.success(f"🔍 Tipo de fallo predicho: {pred[0]}")
 
+        # Mostrar probabilidades por clase
+        proba = model.predict_proba(input_data)[0]
+        classes = model.classes_
+
+        proba_df = pd.DataFrame({
+            'Tipo de fallo': classes,
+            'Probabilidad': proba
+        }).sort_values(by='Probabilidad', ascending=False)
+
+        st.subheader("📊 Probabilidades por tipo de fallo")
+        st.dataframe(proba_df.style.format({'Probabilidad': '{:.2%}'}))
+
     except Exception as e:
         st.error("❌ Error al realizar la predicción. Verifica que todos los datos estén completos y en el formato correcto.")
