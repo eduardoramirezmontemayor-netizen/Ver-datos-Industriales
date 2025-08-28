@@ -6,6 +6,11 @@ import pickle
 with open('modelo.pkl', 'rb') as f:
     model = pickle.load(f)
 
+# Columnas esperadas por el modelo (excluyendo 'Target')
+expected_columns = ['Air temperature [K]', 'Process temperature [K]',
+                    'Rotational speed [rpm]', 'Torque [Nm]',
+                    'Tool wear [min]', 'Type_L', 'Type_M']
+
 # Configuración de la página
 st.set_page_config(page_title="Predicción de Fallos Industriales", layout="centered")
 st.title("🔧 Predicción de Fallos Industriales")
@@ -36,23 +41,23 @@ input_data = pd.DataFrame({
     'Type_M': [type_M]
 })
 
-# Columnas esperadas por el modelo (sin 'Target')
-expected_columns = ['Air temperature [K]', 'Process temperature [K]',
-                    'Rotational speed [rpm]', 'Torque [Nm]',
-                    'Tool wear [min]', 'Type_L', 'Type_M']
+# Validación y adaptación del input_data
+try:
+    # Añadir columnas faltantes con valor neutro
+    for col in expected_columns:
+        if col not in input_data.columns:
+            input_data[col] = 0
 
-# Añadir columnas faltantes con valor neutro
-for col in expected_columns:
-    if col not in input_data.columns:
-        input_data[col] = 0
+    # Reordenar columnas
+    input_data = input_data[expected_columns]
 
-# Reordenar columnas y asegurar tipo numérico
-input_data = input_data[expected_columns].astype(float)
+    # Forzar tipo numérico
+    input_data = input_data.astype(float)
 
-# Predicción
-if st.button("Predecir tipo de fallo"):
-    try:
+    # Predicción
+    if st.button("Predecir tipo de fallo"):
         pred = model.predict(input_data)
         st.success(f"🔍 Tipo de fallo predicho: {pred[0]}")
-    except Exception as e:
-        st.error("❌ Error al realizar la predicción. Verifica los datos de entrada.")
+
+except Exception as e:
+    st.error("❌ Error al realizar la predicción. Verifica que todos los datos estén completos y en el formato correcto.")
