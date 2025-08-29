@@ -16,10 +16,10 @@ st.title("🔧 Predicción de Fallos Industriales")
 st.markdown("Introduce los parámetros operativos para predecir el tipo de fallo.")
 
 # Entradas del usuario
-temperatura_aire = st.number_input("Temperatura del aire [K]", min_value=250.0, max_value=400.0, value=300.0)
-temperatura_proceso = st.number_input("Temperatura del proceso [K]", min_value=250.0, max_value=400.0, value=310.0)
-rotacion = st.number_input("Velocidad de rotación [rpm]", min_value=0.0, max_value=5000.0, value=1500.0)
-torque = st.number_input("Torque aplicado [Nm]", min_value=0.0, max_value=100.0, value=40.0)
+temperatura_aire = st.number_input("Temperatura del aire [K]", min_value=250.0, max_value=500.0, value=300.0)
+temperatura_proceso = st.number_input("Temperatura del proceso [K]", min_value=250.0, max_value=500.0, value=310.0)
+rotacion = st.number_input("Velocidad de rotación [rpm]", min_value=0.0, max_value=15000.0, value=1500.0)
+torque = st.number_input("Torque aplicado [Nm]", min_value=0.0, max_value=200.0, value=40.0)
 desgaste = st.number_input("Desgaste de herramienta [min]", min_value=0.0, max_value=300.0, value=50.0)
 
 # Selección del tipo de producto
